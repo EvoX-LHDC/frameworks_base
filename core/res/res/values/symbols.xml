@@ -6244,4 +6244,10 @@
   <!-- Package and class info to bind to ProximityProviderService -->
   <java-symbol type="string" name="proximity_provider_service_package_name" />
   <java-symbol type="string" name="proximity_provider_service_class_name" />
+
+  <java-symbol type="bool" name="config_devcieHasSecondaryLightSensor" />
+  <java-symbol type="string" name="config_secondaryLightSensorName" />
+  <java-symbol type="string" name="config_secondaryLightSensorType" />
+  <java-symbol type="integer" name="config_secondaryLightSensorPosition" />
+  <java-symbol type="array" name="config_secondaryLightSensorStrategy" />
 </resources>

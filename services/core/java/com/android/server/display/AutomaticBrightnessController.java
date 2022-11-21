@@ -31,6 +31,7 @@ import android.app.TaskStackListener;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -44,6 +45,7 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.Trace;
+import android.text.TextUtils;
 import android.util.EventLog;
 import android.util.IndentingPrintWriter;
 import android.util.MathUtils;
@@ -55,6 +57,7 @@ import android.view.Display;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.display.BrightnessSynchronizer;
 import com.android.internal.os.BackgroundThread;
+import com.android.server.display.utils.SensorUtils;
 import com.android.server.EventLogTags;
 import com.android.server.display.brightness.BrightnessEvent;
 import com.android.server.display.brightness.clamper.BrightnessClamperController;
@@ -65,6 +68,7 @@ import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Manages the associated display brightness when in auto-brightness mode. This is also
@@ -120,6 +124,24 @@ public class AutomaticBrightnessController {
 
     // The light sensor, or null if not available or needed.
     private final Sensor mLightSensor;
+
+    // The secondary light sensor(usually on the back), or null if not available or not needed.
+    // Need to be configured correctly
+    private Sensor mLightSensorSecondary = null;
+    private boolean mLightSensorSecondaryEnabled;
+    private AtomicReference<Float> mSecondaryLux = new AtomicReference<>(0.0f);;
+    private enum SecondaryLightSensorPosition {
+        MODE_ON_THE_BACK,
+        MODE_FRONT // Currently no phone like this?
+    }
+    private SecondaryLightSensorPosition mLightSensorSecondaryPosition 
+                                            = SecondaryLightSensorPosition.MODE_ON_THE_BACK;
+    // Strategy map below
+    //     Strategy                                        Enabled     Value
+    //     SecondaryAsPrimary[Overrides everyth. below]    1/0         Int(Useless)
+    //     TakeSecondaryWhenValue [sec > primary]          1/0         Int(How many delta Lux)
+    //     TakeSecondaryWhenValue [sec < primary]          1/0         Int(How many delta Lux)                                            
+    private int[][] mLightSensorSecondaryStrategy = {{0, 0}, {0, 0}, {0, 0}};
 
     // The mapper to translate ambient lux to screen brightness in the range [0, 1.0].
     @NonNull
@@ -369,6 +391,35 @@ public class AutomaticBrightnessController {
             mLightSensor = lightSensor;
         }
 
+        Resources resources = mContext.getResources();
+        mLightSensorSecondaryEnabled = resources.getBoolean(
+                com.android.internal.R.bool.config_devcieHasSecondaryLightSensor);
+
+        if(mLightSensorSecondaryEnabled) {
+            mLightSensorSecondaryPosition = resources.getInteger(
+                com.android.internal.R.integer.config_secondaryLightSensorPosition) == 0
+                ? SecondaryLightSensorPosition.MODE_ON_THE_BACK
+                : SecondaryLightSensorPosition.MODE_FRONT;
+            String secondarySensorName = resources.getString(
+                com.android.internal.R.string.config_secondaryLightSensorName);
+            String secondarySensorType = resources.getString(
+                com.android.internal.R.string.config_secondaryLightSensorType);
+            String[] secondarySensorStrategyStr = resources.getStringArray(
+                com.android.internal.R.array.config_secondaryLightSensorStrategy);
+            for(int i = 0; i < secondarySensorStrategyStr.length; i++) {
+                String[] parser = secondarySensorStrategyStr[i].split(",");
+                mLightSensorSecondaryStrategy[i][0] = Integer.parseInt(parser[0]);
+                mLightSensorSecondaryStrategy[i][1] = Integer.parseInt(parser[1]);
+            }
+
+            if (!DEBUG_PRETEND_LIGHT_SENSOR_ABSENT) {
+                if(!TextUtils.isEmpty(secondarySensorName) && !TextUtils.isEmpty(secondarySensorType)) {
+                    mLightSensorSecondary = SensorUtils.findSensor(mSensorManager, 
+                        secondarySensorType, secondarySensorName, SensorUtils.NO_FALLBACK);
+                }
+            }
+        }
+
         mActivityTaskManager = ActivityTaskManager.getService();
         mPackageManager = mContext.getPackageManager();
         mTaskStackListener = new TaskStackListenerImpl();
@@ -536,8 +587,15 @@ public class AutomaticBrightnessController {
         if (mAutoBrightnessOneShot && !autoBrightnessOneShot) {
             mSensorManager.registerListener(mLightSensorListener, mLightSensor,
                     mCurrentLightSensorRate * 1000, mHandler);
+            if(mLightSensorSecondaryEnabled) {
+                mSensorManager.registerListener(mLightSensorSecondaryListener, mLightSensorSecondary,
+                        mCurrentLightSensorRate * 1000);
+            }
         } else if (!mAutoBrightnessOneShot && autoBrightnessOneShot) {
             mSensorManager.unregisterListener(mLightSensorListener);
+            if(mLightSensorSecondaryEnabled) {
+                mSensorManager.unregisterListener(mLightSensorSecondaryListener);
+            }
         }
         mAutoBrightnessOneShot = autoBrightnessOneShot;
     }
@@ -727,6 +785,10 @@ public class AutomaticBrightnessController {
                 registerForegroundAppUpdater();
                 mSensorManager.registerListener(mLightSensorListener, mLightSensor,
                         mCurrentLightSensorRate * 1000, mHandler);
+                if(mLightSensorSecondaryEnabled) {
+                    mSensorManager.registerListener(mLightSensorSecondaryListener, mLightSensorSecondary,
+                            mCurrentLightSensorRate * 1000);
+                }
                 return true;
             }
         } else if (mLightSensorEnabled) {
@@ -744,6 +806,9 @@ public class AutomaticBrightnessController {
             mHandler.removeMessages(MSG_UPDATE_AMBIENT_LUX);
             unregisterForegroundAppUpdater();
             mSensorManager.unregisterListener(mLightSensorListener);
+            if(mLightSensorSecondaryEnabled) {
+                mSensorManager.unregisterListener(mLightSensorSecondaryListener);
+            }
         }
         return false;
     }
@@ -781,6 +846,11 @@ public class AutomaticBrightnessController {
             mSensorManager.unregisterListener(mLightSensorListener);
             mSensorManager.registerListener(mLightSensorListener, mLightSensor,
                     lightSensorRate * 1000, mHandler);
+            if(mLightSensorSecondaryEnabled) {
+                mSensorManager.unregisterListener(mLightSensorSecondaryListener);
+                mSensorManager.registerListener(mLightSensorSecondaryListener, mLightSensorSecondary,
+                        lightSensorRate * 1000);
+            }
         }
     }
 
@@ -1056,6 +1126,9 @@ public class AutomaticBrightnessController {
         }
         if (mAutoBrightnessOneShot) {
             mSensorManager.unregisterListener(mLightSensorListener);
+            if(mLightSensorSecondaryEnabled) {
+                mSensorManager.unregisterListener(mLightSensorSecondaryListener);
+            }
         }
     }
 
@@ -1424,8 +1497,56 @@ public class AutomaticBrightnessController {
             if (mLightSensorEnabled) {
                 // The time received from the sensor is in nano seconds, hence changing it to ms
                 final long time = TimeUnit.NANOSECONDS.toMillis(event.timestamp);
-                final float lux = event.values[0];
+                float lux = event.values[0];
+                Float secondaryLux = mSecondaryLux.get();
+
+                if(mLightSensorSecondaryEnabled) {
+                    // Strategy SecondaryAsPrimary
+                    if(mLightSensorSecondaryStrategy[0][0] == 1) {
+                        lux = secondaryLux;
+                        handleLightSensorEvent(time, lux);
+                        return;
+                    }
+                    
+                    // Strategy TakeSecondaryWhenValue [sec > primary]
+                    if(mLightSensorSecondaryStrategy[1][0] == 1) {
+                        if(secondaryLux > lux) {
+                            lux = (secondaryLux - lux) > mLightSensorSecondaryStrategy[1][1]
+                                            ? secondaryLux : lux;
+
+                            // As it's already bigger, no need to run following
+                            handleLightSensorEvent(time, lux);
+                            return;
+                        }
+                    }
+
+                    // Strategy TakeSecondaryWhenValue [sec < primary]
+                    if(mLightSensorSecondaryStrategy[2][0] == 1) {
+                        if(secondaryLux < lux) {
+                            lux = (lux - secondaryLux) > mLightSensorSecondaryStrategy[2][1]
+                                            ? secondaryLux : lux;
+                            handleLightSensorEvent(time, lux);
+                            return;
+                        }
+                    }
+                }
+
                 handleLightSensorEvent(time, lux);
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            // Not used.
+        }
+    };
+
+    private final SensorEventListener mLightSensorSecondaryListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            if (mLightSensorSecondaryEnabled) {
+                Float mSecondaryLuxOldVal = mSecondaryLux.get();
+                mSecondaryLux.compareAndSet(mSecondaryLuxOldVal, event.values[0]);
             }
         }
 

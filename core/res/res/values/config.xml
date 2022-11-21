@@ -7616,4 +7616,33 @@
     <string name="proximity_provider_service_package_name" translatable="false"></string>
     <string name="proximity_provider_service_class_name" translatable="false"></string>
 
+    <!-- Whether this device has a secondary light sensor for auto brightness -->
+    <bool name="config_devcieHasSecondaryLightSensor">false</bool>
+
+    <!-- The secondary sensor name. For finding it, you can use "dumpsys sensorservice"
+         **Remember to keep the space in name correctly or system can't find it, like two spaces(\u0020) for Mi 10 Ultra(cas)
+         Eg. <string name="config_secondaryLightSensorName" translatable="false">tcs3408\u0020\u0020Non-wakeup</string>
+         ps. Light sensor is always Non-wakeup type, ref -> https://source.android.com/devices/sensors/suspend-mode -->
+    <string name="config_secondaryLightSensorName" translatable="false">null</string>
+
+    <!-- The secondary sensor type. For finding it, you can use "dumpsys sensorservice"
+         Eg. <string name="config_secondaryLightSensorType" translatable="false">xiaomi.sensor.back_lux</string> -->
+    <string name="config_secondaryLightSensorType" translatable="false">null</string>
+
+    <!-- Where is the secondary light sensor
+               * 0 -> MODE_ON_THE_BACK
+               * 1 -> MODE_FRONT             -->
+    <integer name="config_secondaryLightSensorPosition">0</integer>
+
+    <!-- How to use the secondary sensor data
+     Strategy map below
+         Strategy                                        Enabled     Value
+         SecondaryAsPrimary[Overrides everyth. below]    1/0         Int(Useless)
+         TakeSecondaryWhenValue [sec > primary]          1/0         Int(How many delta Lux)
+         TakeSecondaryWhenValue [sec < primary]          1/0         Int(How many delta Lux)              -->
+    <string-array name="config_secondaryLightSensorStrategy" translatable="false">
+        <item>0,0</item>
+        <item>0,0</item>
+        <item>0,0</item>
+    </string-array>
 </resources>

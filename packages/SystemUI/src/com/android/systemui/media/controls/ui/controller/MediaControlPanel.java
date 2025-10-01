@@ -939,7 +939,6 @@ public class MediaControlPanel {
             int screenWidth = bounds.width();
             int screenHeight = bounds.height();
             Drawable albumArt = getScaledBackground(artworkIcon, screenWidth, screenHeight);
-            MediaSessionManager.Companion.get().onAlbumArtChanged(albumArt);
             WallpaperColors wallpaperColors = getWallpaperColor(artworkIcon);
             boolean darkTheme = false;
             if (wallpaperColors != null) {
@@ -963,8 +962,6 @@ public class MediaControlPanel {
                 }
             }
 
-            MediaSessionManager.Companion.get().onMediaColorsChanged(mutableColorScheme.getAccent1().getS100());
-
             final ColorScheme colorScheme = mutableColorScheme;
             mMainExecutor.execute(() -> {
                 // Cancel the request if a later one arrived first
@@ -973,6 +970,9 @@ public class MediaControlPanel {
                     return;
                 }
                 mArtworkBoundId = reqId;
+
+                MediaSessionManager.Companion.get().onAlbumArtChanged(albumArt);
+                MediaSessionManager.Companion.get().onMediaColorsChanged(colorScheme.getAccent1().getS100());
 
                 // Transition Colors to current color scheme
                 boolean colorSchemeChanged;

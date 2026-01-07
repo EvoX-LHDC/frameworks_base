@@ -306,4 +306,96 @@
     <item msgid="7880769915418638436">"status_bar_latest_touch"</item>
     <item msgid="4313165186636015195">"focused_display"</item>
   </string-array>
+
+  <!-- Savitech Patch - START -->
+  <!-- Titles for Bluetooth Audio Codec LHDCV3/V4 Playback Quality selection preference. [CHAR LIMIT=70] -->
+  <string-array name="bluetooth_a2dp_codec_lhdc_playback_quality_titles">
+    <item>比特率(低1)：128kbps</item>
+    <item>比特率(低2)：192kbps</item>
+    <item>比特率(低3)：256kbps</item>
+    <item>比特率(低4)：320kbps</item>
+    <item>比特率(低)：400kbps</item>
+    <item>比特率(中)：500kbps</item>
+    <item>比特率(高)：900kbps</item>
+    <item>比特率(高1)：1000kbps</item>
+    <item>自动比特率模式 (ABR)</item>
+  </string-array>
+
+  <!-- Summaries for Bluetooth Audio Codec LHDCV3/V4 Playback Quality selection preference. [CHAR LIMIT=70]-->
+  <string-array name="bluetooth_a2dp_codec_lhdc_playback_quality_summaries">
+    <item>128 kbps</item>
+    <item>192 kbps</item>
+    <item>256 kbps</item>
+    <item>320 kbps</item>
+    <item>400 kbps</item>
+    <item>500 kbps</item>
+    <item>900 kbps</item>
+    <item>1000 kbps</item>
+    <item>自动比特率模式</item>
+  </string-array>
+
+  <!-- Titles for Bluetooth Audio Codec LHDCV5 Playback Quality selection preference. [CHAR LIMIT=70] -->
+  <string-array name="bluetooth_a2dp_codec_lhdcv5_playback_quality_titles">
+    <item>比特率(低0)：120~130 kbps</item>
+    <item>比特率(低1)：160 kbps</item>
+    <item>比特率(低2)：180~200 kbps</item>
+    <item>比特率(低3)：240~260 kbps</item>
+    <item>比特率(低4)：300~320 kbps</item>
+    <item>比特率(低)：380~390 kbps</item>
+    <item>比特率(中)：480~520 kbps</item>
+    <item>比特率(高)：900 kbps</item>
+    <item>比特率(高1)：1000 kbps</item>
+    <item>自动比特率模式 (ABR)</item>
+  </string-array>
+
+  <!-- Summaries for Bluetooth Audio Codec LHDCV5 Playback Quality selection preference. [CHAR LIMIT=70]-->
+  <string-array name="bluetooth_a2dp_codec_lhdcv5_playback_quality_summaries">
+    <item>120~130 kbps</item>
+    <item>160 kbps</item>
+    <item>180~200 kbps</item>
+    <item>240~260 kbps</item>
+    <item>300~320 kbps</item>
+    <item>380~390 kbps</item>
+    <item>480~520 kbps</item>
+    <item>900 kbps</item>
+    <item>1000 kbps</item>
+    <item>自动比特率模式</item>
+  </string-array>
+
+  <!-- Titles for Bluetooth Audio Codec LHDC Low Latency selection preference. [CHAR LIMIT=70] -->
+  <string-array name="bluetooth_enable_a2dp_codec_lhdc_latency_titles">
+    <item>禁用低延迟模式</item>
+    <item>启用低延迟模式</item>
+  </string-array>
+
+  <!-- Summaries for Bluetooth Audio Codec LHDC Latency selection preference. [CHAR LIMIT=70]-->
+  <string-array name="bluetooth_enable_a2dp_codec_lhdc_latency_summaries">
+    <item>低延迟：关闭</item>
+    <item>低延迟：开启</item>
+  </string-array>
+
+  <!-- Titles for Bluetooth Audio Codec LHDC Lossless selection preference. [CHAR LIMIT=70] -->
+  <string-array name="bluetooth_enable_a2dp_codec_lhdc_lossless_titles">
+    <item>关闭</item>
+    <item>开启</item>
+  </string-array>
+
+  <!-- Summaries for Bluetooth Audio Codec LHDC Lossless selection preference [CHAR LIMIT=70]-->
+  <string-array name="bluetooth_enable_a2dp_codec_lhdc_lossless_summaries">
+    <item>LHDC 无损：关闭</item>
+    <item>LHDC 无损：开启</item>
+  </string-array>
+
+  <!-- Titles for Bluetooth Audio Codec LHDC Lossless Raw mode selection preference. [CHAR LIMIT=70] -->
+  <string-array name="bluetooth_enable_a2dp_codec_lhdc_lossless_raw_titles">
+    <item>关闭</item>
+    <item>开启</item>
+  </string-array>
+
+  <!-- Summaries for Bluetooth Audio Codec LHDC Lossless Raw mode selection preference [CHAR LIMIT=70]-->
+  <string-array name="bluetooth_enable_a2dp_codec_lhdc_lossless_raw_summaries">
+    <item>LHDC 无损 Raw 模式：关闭</item>
+    <item>LHDC 无损 Raw 模式：开启</item>
+  </string-array>
+  <!-- Savitech Patch - END -->
 </resources>
